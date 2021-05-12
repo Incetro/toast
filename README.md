@@ -1,9 +1,6 @@
-<H1 align="center">
-Toast
-</H1>
-<H4 align="center">
-Toast is a Swifty framework for easy iOS toasts</br>
-</H4>
+![](toast.png)
+
+<H1 align="center">Toast</H1>
 
 <p align="center">
 <a href="https://cocoapods.org/pods/swifty-toast"><img alt="Version" src="https://img.shields.io/cocoapods/v/Toast.svg?style=flat"></a> 
@@ -11,8 +8,6 @@ Toast is a Swifty framework for easy iOS toasts</br>
 <a href="https://developer.apple.com/"><img alt="Platform" src="https://img.shields.io/badge/platform-iOS-green.svg"/></a> 
 <a href="https://developer.apple.com/swift"><img alt="Swift4.2" src="https://img.shields.io/badge/language-Swift5.3-orange.svg"/></a>
 </p>
-
-____
 
 ## Usage
 
