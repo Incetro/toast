@@ -56,11 +56,11 @@ All of these properties are specified as part of custom state, like so:
 
 ```swift
 Toast(
-    "Switched to light mode", 
+    "Toast message", 
     state: .custom(
         .init(
             backgroundColor: .black, 
-            icon: UIImage(named: "moon")
+            icon: UIImage(named: "image")
         )
     ),
     source: self
@@ -94,7 +94,7 @@ Toast(
 
 Specify the presentation duration. When presenting a Toast with `.show()`, a presentation duration can be specified. The default value is 4s, but there are presets for 2s and 8s. This is done by using `.show(.short)` for 2s, or `.show(.long)` for 8s. A custom duration can also be specified with `.show(.custom(x))`, where x represents the duration in seconds.
 
-A Toast's width can be specified via the `Style` component. The width can be specifed as a fixed size (i.e. 280px) or as a percentage of the screen's width. (i.e. `0.8` -> 80%). Here is some example usage:
+A Toast's width can be specified via the `Style` component. The width can be specifed as a fixed size (i.e. 280px) or as a percentage of the screen's width. (i.e. `0.8` -> 87%). Here is some example usage:
 
 ```swift
 Toast(
@@ -102,7 +102,7 @@ Toast(
     state: .custom(
         .init(
             backgroundColor: .black, 
-            width: .screenPercentage(0.8)
+            width: .screenPercentage(0.87)
         )
     ),
     source: self
