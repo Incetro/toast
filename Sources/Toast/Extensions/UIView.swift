@@ -59,7 +59,7 @@ public extension UIView {
         }
     }
 
-    func smoothlyRoundCourners(_ corners: SmoothCornerType = .full, radius: CGFloat) {
+    func roundCourners(_ corners: SmoothCornerType = .full, radius: CGFloat) {
         layer.cornerRadius = radius
         layer.maskedCorners = corners.corners
         layer.masksToBounds = true

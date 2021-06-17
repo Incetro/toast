@@ -20,7 +20,7 @@ extension UIViewController {
         smartToastViewController.transitioningDelegate = smartToastViewController.transDelegate
         smartToastViewController.modalPresentationStyle = .custom
         smartToastViewController.view.clipsToBounds = true
-        smartToastViewController.view.smoothlyRoundCourners(radius: Constants.cornerRadius)
+        smartToastViewController.view.roundCourners(radius: Constants.cornerRadius)
         present(smartToastViewController, animated: true)
     }
 }

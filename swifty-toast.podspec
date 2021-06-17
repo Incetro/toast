@@ -1,7 +1,7 @@
 Pod::Spec.new do |spec|
   spec.name          = 'swifty-toast'
   spec.module_name   = 'Toast'
-  spec.version       = '0.0.3'
+  spec.version       = '0.0.4'
   spec.license       = 'MIT'
   spec.authors       = { 'incetro' => 'incetro@ya.ru' }
   spec.homepage      = "https://github.com/Incetro/toast.git"
