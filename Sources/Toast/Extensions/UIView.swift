@@ -10,7 +10,7 @@ import UIKit
 
 // MARK: - UIView
 
-public extension UIView {
+extension UIView {
 
     enum SmoothCornerType {
 
