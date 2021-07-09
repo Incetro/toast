@@ -11,9 +11,9 @@ import UIKit
 // MARK: - Toast
 
 final public class Toast {
-    
+
     // MARK: - Style
-    
+
     /// Define a custom style for the toast.
     public struct Style {
         /// Specifies the position of the icon on the toast. (Default is `.left`)
@@ -24,7 +24,7 @@ final public class Toast {
             case left
             case right
         }
-		
+
         /// Specifies the width of the Toast. (Default is `.fixed(Constants.wdith)`)
         ///
         /// - fixed: Specified as pixel size. i.e. 280
@@ -39,34 +39,39 @@ final public class Toast {
             case standard(UIImage)
             case custom(UIView)
         }
-        
+
         /// The background color of the toast.
         let backgroundColor: UIColor
-        
+
         /// The color of the label's text
         let textColor: UIColor
-        
+
         /// The color of the icon (Assuming it's rendered as template)
         let tintColor: UIColor
-        
+
         /// The font of the label
         let font: UIFont
-        
+
         /// The icon on the toast
         let accessory: Accessory?
 
         /// Our icon / view size
         let accessorySize: CGFloat
-        
+
         /// The alignment of the text within the Toast
         let textAlignment: NSTextAlignment
-        
+
         /// The position of the icon
         let iconAlignment: IconAlignment
-		
+
         /// The width of the toast
         let width: Width
-		
+
+        /// True if we need to blur toast color
+        let isBlurred: Bool
+
+        // MARK: - Initializers
+
         public init(
             backgroundColor: UIColor,
             textColor: UIColor = .white,
@@ -76,7 +81,9 @@ final public class Toast {
             accessorySize: CGFloat = 24,
             textAlignment: NSTextAlignment = .left,
             iconAlignment: IconAlignment = .left,
-            width: Width = .fixed(Constants.width)) {
+            width: Width = .fixed(Constants.width),
+            isBlurred: Bool = false
+        ) {
             self.backgroundColor = backgroundColor
             self.textColor = textColor
             self.tintColor = tintColor
@@ -86,11 +93,12 @@ final public class Toast {
             self.textAlignment = textAlignment
             self.iconAlignment = iconAlignment
             self.width = width
+            self.isBlurred = isBlurred
         }
     }
 
     // MARK: - State
-    
+
     /// Defines the toast's status. (Default is `.info`)
     ///
     /// - success: Represents a success message
@@ -131,7 +139,7 @@ final public class Toast {
     }
 
     // MARK: - Duration
-    
+
     /// Defines the duration of the toast presentation. (Default is .`avergae`)
     ///
     /// - short: 2 seconds
@@ -144,7 +152,7 @@ final public class Toast {
         case average
         case long
         case custom(TimeInterval)
-        
+
         var length: TimeInterval {
             switch self {
             case .short:
@@ -160,7 +168,7 @@ final public class Toast {
     }
 
     // MARK: - Icon
-    
+
     /// Icons used in basic states
     public enum Icon {
 
@@ -197,13 +205,13 @@ final public class Toast {
     }
 
     // MARK: - DismissalReason
-    
+
     // Reason a Toast was dismissed
     public enum DismissalReason {
         case tapped
         case timedOut
     }
-    
+
     // MARK: - Properties
 
     /// Completion closure alias
@@ -270,7 +278,7 @@ final public class Toast {
     }
 
     // MARK: - Useful
-    
+
     /// Show the toast for a specified duration. (Default is `.average`)
     ///
     /// - Parameter duration: Length the toast will be presented
@@ -279,17 +287,17 @@ final public class Toast {
         self.completionHandler = completionHandler
         ToastManipulator.shared.queueAndPresent(self)
     }
-	
-	/// Manually dismiss a currently presented Toast
-	///
-	/// - Parameter animated: Whether the dismissal will be animated
-	public static func dismiss(source: UIViewController, animated: Bool = true){
-		guard ToastManipulator.shared.isPresenting else { return }
-		guard let vc = source.presentedViewController as? ToastViewController else { return }
-		vc.dismiss(animated: animated) {
-			vc.delegate?.toastDidDismiss()
-		}
-	}
+
+    /// Manually dismiss a currently presented Toast
+    ///
+    /// - Parameter animated: Whether the dismissal will be animated
+    public static func dismiss(source: UIViewController, animated: Bool = true){
+        guard ToastManipulator.shared.isPresenting else { return }
+        guard let vc = source.presentedViewController as? ToastViewController else { return }
+        vc.dismiss(animated: animated) {
+            vc.delegate?.toastDidDismiss()
+        }
+    }
 }
 
 // MARK: - ToastManipulator
@@ -350,6 +358,14 @@ final class ToastViewController: UIViewController {
 
     /// Current toast instance
     let toast: Toast
+
+    /// Visual effect (blur) view
+    private lazy var blurBackgroundView: UIVisualEffectView = {
+        let blur = UIVisualEffectView(effect: UIBlurEffect(style: .light))
+        blur.isUserInteractionEnabled = false
+        blur.subviews[1].backgroundColor = UIColor.black.withAlphaComponent(0.93)
+        return blur
+    }()
 
     /// Current toast message
     private let label = UILabel()
@@ -415,7 +431,7 @@ final class ToastViewController: UIViewController {
         )
         preferredContentSize = CGSize(width: width, height: height)
     }
-    
+
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -424,7 +440,7 @@ final class ToastViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         label.text = toast.message
         label.numberOfLines = 0
         label.lineBreakMode = .byWordWrapping
@@ -433,7 +449,7 @@ final class ToastViewController: UIViewController {
         label.textAlignment = textAlignment
         label.setContentCompressionResistancePriority(.required, for: .vertical)
         label.translatesAutoresizingMaskIntoConstraints = false
-        
+
         imageView?.tintColor = .white
         imageView?.contentMode = .scaleAspectFit
         accessoryView.translatesAutoresizingMaskIntoConstraints = false
@@ -456,7 +472,11 @@ final class ToastViewController: UIViewController {
             view.backgroundColor = UIColor(hexString: "#738290")
             constrainWithIconAlignment(.left)
         case .custom(style: let style):
-            view.backgroundColor = style.backgroundColor
+            if style.isBlurred {
+                blurBackgroundView.subviews[1].backgroundColor = style.backgroundColor
+            } else {
+                view.backgroundColor = style.backgroundColor
+            }
             label.textColor = style.textColor
             label.font = style.font
             switch style.accessory {
@@ -471,10 +491,10 @@ final class ToastViewController: UIViewController {
                 break
             }
         }
-        
+
         let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
         view.addGestureRecognizer(tapGesture)
-        
+
         DispatchQueue.main.asyncAfter(deadline: .now() + toast.duration.length, execute: {
             self.dismiss(animated: true) { [weak self] in
                 self?.delegate?.toastDidDismiss()
@@ -484,7 +504,7 @@ final class ToastViewController: UIViewController {
     }
 
     // MARK: - Actions
-    
+
     @objc private func handleTap() {
         dismiss(animated: true) { [weak self] in
             self?.delegate?.toastDidDismiss()
@@ -493,8 +513,20 @@ final class ToastViewController: UIViewController {
     }
 
     // MARK: - Private
-    
+
     private func constrainWithIconAlignment(_ alignment: Toast.Style.IconAlignment, showsIcon: Bool = true) {
+
+        if case let .custom(style) = toast.state, style.isBlurred {
+            view.addSubview(blurBackgroundView)
+            blurBackgroundView.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                blurBackgroundView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+                blurBackgroundView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+                blurBackgroundView.topAnchor.constraint(equalTo: view.topAnchor),
+                blurBackgroundView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+            ])
+        }
+
         view.addSubview(label)
         let sidesInset: CGFloat = 13
         if showsIcon {
