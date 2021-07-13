@@ -60,7 +60,7 @@ Toast(
     state: .custom(
         .init(
             backgroundColor: .black, 
-            icon: UIImage(named: "image")
+            accessory: UIImage(named: "image")
         )
     ),
     source: self
