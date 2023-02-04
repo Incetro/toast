@@ -93,24 +93,24 @@ class ViewController: UIViewController {
                 source: self
             ).show(.short)
         }
-        addRow("Animation", cornersType: .last) {
-            self.hapticFeedback.generate(.light)
-            let animationView = AnimationView()
-            animationView.prepareForAutolayout()
-            animationView.loopMode = .loop
-            animationView.animation = Animation.named("clock")
-            animationView.play()
-            Toast(
-                Examples.animation.rawValue,
-                state: .custom(
-                    .init(
-                        backgroundColor: .init(hexString: "#738290"),
-                        accessory: .custom(animationView)
-                    )
-                ),
-                source: self
-            ).show(.average)
-        }
+//        addRow("Animation", cornersType: .last) {
+//            self.hapticFeedback.generate(.light)
+//            let animationView = AnimationView()
+//            animationView.prepareForAutolayout()
+//            animationView.loopMode = .loop
+//            animationView.animation = Animation.named("clock")
+//            animationView.play()
+//            Toast(
+//                Examples.animation.rawValue,
+//                state: .custom(
+//                    .init(
+//                        backgroundColor: .init(hexString: "#738290"),
+//                        accessory: .custom(animationView)
+//                    )
+//                ),
+//                source: self
+//            ).show(.average)
+//        }
 
         addSection(named: "Locations")
         addRow("Bottom", cornersType: .first) {
@@ -212,6 +212,26 @@ class ViewController: UIViewController {
                 ),
                 source: self
             ).show(.short)
+        }
+        
+        addSection(named: "Toast View")
+        addRow("Toast View top", cornersType: .first) {
+            self.hapticFeedback.generate(.light)
+            Toast(
+                Examples.left.rawValue,
+                location: .top,
+                source: self
+            )
+            .showView()
+        }
+        
+        addRow("Toast View bottom", cornersType: .last) {
+            self.hapticFeedback.generate(.light)
+            Toast(
+                Examples.left.rawValue,
+                location: .bottom,
+                source: self
+            ).showView()
         }
     }
 

@@ -298,6 +298,11 @@ final public class Toast {
             vc.delegate?.toastDidDismiss()
         }
     }
+    
+    public func showView(_ duration: Duration = .average) {
+        self.duration = duration
+        ToastManipulator.shared.queueAndPresentView(self)
+    }
 }
 
 // MARK: - ToastManipulator
@@ -323,6 +328,13 @@ private final class ToastManipulator: ToastDelegate {
         queue.enqueue(toast)
         presentIfPossible()
     }
+    
+    /// Add toast to global toasts queue
+    /// - Parameter toast: toast instance
+    fileprivate func queueAndPresentView(_ toast: Toast) {
+        queue.enqueue(toast)
+        presentViewIfPossible()
+    }
 
     // MARK: - ToastDelegate
 
@@ -330,6 +342,12 @@ private final class ToastManipulator: ToastDelegate {
     func toastDidDismiss() {
         isPresenting = false
         presentIfPossible()
+    }
+    
+    /// Toast view has been dismissed
+    func toastViewDidDismiss() {
+        isPresenting = false
+        presentViewIfPossible()
     }
 
     /// Present next toast if it's possible
@@ -340,6 +358,15 @@ private final class ToastManipulator: ToastDelegate {
         toastVC.delegate = self
         source.toast(toastVC)
     }
+    
+    /// Present next toast view if it's possible
+    fileprivate func presentViewIfPossible() {
+        guard isPresenting == false, let toast = queue.dequeue(), let source = toast.source else { return }
+        isPresenting = true
+        let toastView = ToastView(toast)
+        toastView.delegate = self
+        toastView.show(in: source)
+    }
 }
 
 // MARK: - ToastDelegate
@@ -348,6 +375,9 @@ private protocol ToastDelegate: AnyObject {
 
     /// Toast has been dismissed
     func toastDidDismiss()
+    
+    /// Toast view has been dismissed
+    func toastViewDidDismiss()
 }
 
 // MARK: - ToastViewController
@@ -563,6 +593,266 @@ final class ToastViewController: UIViewController {
                 label.bottomAnchor.constraint(equalTo: view.bottomAnchor)
             ])
         }
+    }
+}
+
+// MARK: - ToastView
+
+public final class ToastView: UIView {
+
+    // MARK: - Properties
+
+    /// Current toast instance
+    public let toast: Toast
+
+    /// Visual effect (blur) view
+    private lazy var blurBackgroundView: UIVisualEffectView = {
+        let blur = UIVisualEffectView(effect: UIBlurEffect(style: .light))
+        blur.isUserInteractionEnabled = false
+        blur.subviews[1].backgroundColor = UIColor.black.withAlphaComponent(0.93)
+        return blur
+    }()
+
+    /// Current toast message
+    private let label = UILabel()
+
+    /// Current accessory view unwrapped to UIImageView
+    private var imageView: UIImageView? {
+        accessoryView as? UIImageView
+    }
+
+    /// Current toast image
+    private let accessoryView: UIView
+
+    /// Current message font
+    private var font = UIFont.systemFont(ofSize: 14, weight: .medium)
+
+    /// Current toast text alignment
+    private var textAlignment: NSTextAlignment = .left
+    
+    /// Delegate instance
+    fileprivate weak var delegate: ToastDelegate?
+    
+    /// Target size of the view
+    private let size: CGSize
+
+    // MARK: - Initializers
+
+    /// Default initializer
+    /// - Parameter toast: some toast
+    public init(_ toast: Toast) {
+        switch toast.state {
+        case .custom(let style):
+            if case let .custom(view) = style.accessory {
+                accessoryView = view
+            } else {
+                fallthrough
+            }
+        default:
+            accessoryView = UIImageView()
+        }
+        self.toast = toast
+        var width = UIScreen.main.bounds.width
+        if case let Toast.State.custom(style) = toast.state {
+            self.font = style.font
+            self.textAlignment = style.textAlignment
+            switch style.width {
+            case .fixed(let value):
+                width = value
+            case .screenPercentage(let percentage):
+                guard 0...1 ~= percentage else { break }
+                width = UIScreen.main.bounds.width * percentage
+            }
+        } else {
+            width = Constants.width
+        }
+        let height = max(
+            toast.message.heightWithConstrainedWidth(
+                width: Constants.width - Constants.sidesInset * 2,
+                font: font
+            ) + 36,
+            Constants.height
+        )
+        size = .init(width: width, height: height)
+        super.init(frame: .zero)
+        translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            widthAnchor.constraint(equalToConstant: size.width),
+            heightAnchor.constraint(equalToConstant: size.height)
+        ])
+        setup()
+    }
+
+    public required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    // MARK: - Private
+    
+    private func setup() {
+        
+        label.text = toast.message
+        label.numberOfLines = 0
+        label.lineBreakMode = .byWordWrapping
+        label.textColor = .white
+        label.font = font
+        label.textAlignment = textAlignment
+        label.setContentCompressionResistancePriority(.required, for: .vertical)
+        label.translatesAutoresizingMaskIntoConstraints = false
+
+        imageView?.tintColor = .white
+        imageView?.contentMode = .scaleAspectFit
+        accessoryView.translatesAutoresizingMaskIntoConstraints = false
+
+        switch toast.state {
+        case .success:
+            imageView?.image = Toast.Icon.success
+            backgroundColor = UIColor(hexString: "#2ECC71")
+            constrainWithIconAlignment(.left)
+        case .warning:
+            imageView?.image = Toast.Icon.warning
+            backgroundColor = UIColor(hexString: "#FCAB10")
+            constrainWithIconAlignment(.left)
+        case .error:
+            imageView?.image = Toast.Icon.error
+            backgroundColor = UIColor(hexString: "#F8333C")
+            constrainWithIconAlignment(.left)
+        case .info:
+            imageView?.image = Toast.Icon.info
+            backgroundColor = UIColor(hexString: "#738290")
+            constrainWithIconAlignment(.left)
+        case .custom(style: let style):
+            if style.isBlurred {
+                blurBackgroundView.subviews[1].backgroundColor = style.backgroundColor
+            } else {
+                backgroundColor = style.backgroundColor
+            }
+            label.textColor = style.textColor
+            label.font = style.font
+            switch style.accessory {
+            case .standard(let image):
+                imageView?.image = image
+                imageView?.tintColor = style.tintColor
+                constrainWithIconAlignment(style.iconAlignment, showsIcon: imageView?.image != nil)
+            case .none:
+                constrainWithIconAlignment(style.iconAlignment, showsIcon: false)
+            default:
+                constrainWithIconAlignment(style.iconAlignment, showsIcon: true)
+                break
+            }
+        }
+
+        roundCourners(radius: Constants.cornerRadius)
+        
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
+        addGestureRecognizer(tapGesture)
+        DispatchQueue.main.asyncAfter(deadline: .now() + toast.duration.length) { [weak self] in
+            self?.hide()
+        }
+    }
+    
+    private func hide() {
+        UIView.animate(
+            withDuration: 0.25,
+            delay: 0,
+            usingSpringWithDamping: 0.8,
+            initialSpringVelocity: 0.65,
+            options: .curveEaseOut,
+            animations: { [weak self] in
+                self?.transform = .identity
+            },
+            completion: { [weak self] _ in
+                self?.delegate?.toastViewDidDismiss()
+                self?.toast.completionHandler?(.timedOut)
+                self?.removeFromSuperview()
+            }
+        )
+    }
+
+    // MARK: - Actions
+
+    @objc private func handleTap() {
+        hide()
+    }
+
+    // MARK: - Private
+
+    private func constrainWithIconAlignment(_ alignment: Toast.Style.IconAlignment, showsIcon: Bool = true) {
+
+        if case let .custom(style) = toast.state, style.isBlurred {
+            addSubview(blurBackgroundView)
+            blurBackgroundView.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                blurBackgroundView.leadingAnchor.constraint(equalTo: leadingAnchor),
+                blurBackgroundView.trailingAnchor.constraint(equalTo: trailingAnchor),
+                blurBackgroundView.topAnchor.constraint(equalTo: topAnchor),
+                blurBackgroundView.bottomAnchor.constraint(equalTo: bottomAnchor)
+            ])
+        }
+
+        addSubview(label)
+        let sidesInset: CGFloat = 13
+        if showsIcon {
+            addSubview(accessoryView)
+            switch alignment {
+            case .left:
+                NSLayoutConstraint.activate([
+                    accessoryView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: sidesInset),
+                    accessoryView.centerYAnchor.constraint(equalTo: centerYAnchor),
+                    accessoryView.heightAnchor.constraint(equalToConstant: toast.accessorySize),
+                    accessoryView.widthAnchor.constraint(equalToConstant: toast.accessorySize),
+                    label.leadingAnchor.constraint(equalTo: accessoryView.trailingAnchor, constant: sidesInset),
+                    label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -sidesInset),
+                    label.topAnchor.constraint(equalTo: topAnchor),
+                    label.bottomAnchor.constraint(equalTo: bottomAnchor)
+                ])
+            case .right:
+                NSLayoutConstraint.activate([
+                    accessoryView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -sidesInset),
+                    accessoryView.centerYAnchor.constraint(equalTo: centerYAnchor),
+                    accessoryView.heightAnchor.constraint(equalToConstant: toast.accessorySize),
+                    accessoryView.widthAnchor.constraint(equalToConstant: toast.accessorySize),
+                    label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: sidesInset),
+                    label.trailingAnchor.constraint(equalTo: accessoryView.leadingAnchor, constant: -sidesInset),
+                    label.topAnchor.constraint(equalTo: topAnchor),
+                    label.bottomAnchor.constraint(equalTo: bottomAnchor)
+                ])
+            }
+        } else {
+            NSLayoutConstraint.activate([
+                label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: sidesInset),
+                label.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -sidesInset),
+                label.topAnchor.constraint(equalTo: topAnchor),
+                label.bottomAnchor.constraint(equalTo: bottomAnchor)
+            ])
+        }
+    }
+    
+    // MARK: - Useful
+    
+    public func show(in source: UIViewController) {
+        source.view.addSubview(self)
+        var constaints = [centerXAnchor.constraint(equalTo: source.view.centerXAnchor)]
+        let transform: CGAffineTransform
+        switch toast.location {
+        case .top:
+            constaints.append(bottomAnchor.constraint(equalTo: source.view.topAnchor))
+            transform = CGAffineTransform(translationX: 0, y: source.view.safeAreaInsets.top + size.height)
+        case .bottom:
+            constaints.append(topAnchor.constraint(equalTo: source.view.bottomAnchor))
+            transform = CGAffineTransform(translationX: 0, y: -source.view.safeAreaInsets.bottom - size.height)
+        }
+        NSLayoutConstraint.activate(constaints)
+        UIView.animate(
+            withDuration: 0.25,
+            delay: 0,
+            usingSpringWithDamping: 0.8,
+            initialSpringVelocity: 0.65,
+            options: .curveEaseOut,
+            animations: { [ weak self] in
+                self?.transform = transform
+            }
+        )
     }
 }
 
