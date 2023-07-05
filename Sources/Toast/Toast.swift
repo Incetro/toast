@@ -363,7 +363,7 @@ private final class ToastManipulator: ToastDelegate {
     fileprivate func presentViewIfPossible() {
         guard isPresenting == false, let toast = queue.dequeue(), let source = toast.source else { return }
         isPresenting = true
-        let toastView = ToastView(toast)
+        let toastView = ToastView(toast: toast)
         toastView.delegate = self
         toastView.show(in: source)
     }
@@ -640,7 +640,7 @@ public final class ToastView: UIView {
 
     /// Default initializer
     /// - Parameter toast: some toast
-    public init(_ toast: Toast) {
+    public init(toast: Toast) {
         switch toast.state {
         case .custom(let style):
             if case let .custom(view) = style.accessory {
