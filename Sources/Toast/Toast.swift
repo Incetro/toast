@@ -54,6 +54,9 @@ final public class Toast {
 
         /// The icon on the toast
         let accessory: Accessory?
+        
+        /// The right button on the toast
+        let rightButton: UIButton?
 
         /// Our icon / view size
         let accessorySize: CGFloat
@@ -82,7 +85,8 @@ final public class Toast {
             textAlignment: NSTextAlignment = .left,
             iconAlignment: IconAlignment = .left,
             width: Width = .fixed(Constants.width),
-            isBlurred: Bool = false
+            isBlurred: Bool = false,
+            rightButton: UIButton? = nil
         ) {
             self.backgroundColor = backgroundColor
             self.textColor = textColor
@@ -94,6 +98,7 @@ final public class Toast {
             self.iconAlignment = iconAlignment
             self.width = width
             self.isBlurred = isBlurred
+            self.rightButton = rightButton
         }
     }
 
@@ -563,16 +568,35 @@ final class ToastViewController: UIViewController {
             view.addSubview(accessoryView)
             switch alignment {
             case .left:
-                NSLayoutConstraint.activate([
-                    accessoryView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: sidesInset),
-                    accessoryView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
-                    accessoryView.heightAnchor.constraint(equalToConstant: toast.accessorySize),
-                    accessoryView.widthAnchor.constraint(equalToConstant: toast.accessorySize),
-                    label.leadingAnchor.constraint(equalTo: accessoryView.trailingAnchor, constant: sidesInset),
-                    label.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -sidesInset),
-                    label.topAnchor.constraint(equalTo: view.topAnchor),
-                    label.bottomAnchor.constraint(equalTo: view.bottomAnchor)
-                ])
+                if case let .custom(style) = toast.state, let button = style.rightButton {
+                    view.addSubview(button)
+                    button.translatesAutoresizingMaskIntoConstraints = false
+                    NSLayoutConstraint.activate([
+                        accessoryView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: sidesInset),
+                        accessoryView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+                        accessoryView.heightAnchor.constraint(equalToConstant: toast.accessorySize),
+                        accessoryView.widthAnchor.constraint(equalToConstant: toast.accessorySize),
+                        label.leadingAnchor.constraint(equalTo: accessoryView.trailingAnchor, constant: sidesInset),
+                        label.trailingAnchor.constraint(equalTo: button.leadingAnchor, constant: -sidesInset),
+                        label.topAnchor.constraint(equalTo: view.topAnchor),
+                        label.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+                        button.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -sidesInset),
+                        button.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+                        button.heightAnchor.constraint(equalToConstant: toast.accessorySize),
+                        button.widthAnchor.constraint(equalToConstant: toast.accessorySize)
+                    ])
+                } else {
+                    NSLayoutConstraint.activate([
+                        accessoryView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: sidesInset),
+                        accessoryView.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+                        accessoryView.heightAnchor.constraint(equalToConstant: toast.accessorySize),
+                        accessoryView.widthAnchor.constraint(equalToConstant: toast.accessorySize),
+                        label.leadingAnchor.constraint(equalTo: accessoryView.trailingAnchor, constant: sidesInset),
+                        label.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -sidesInset),
+                        label.topAnchor.constraint(equalTo: view.topAnchor),
+                        label.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+                    ])
+                }
             case .right:
                 NSLayoutConstraint.activate([
                     accessoryView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -sidesInset),
