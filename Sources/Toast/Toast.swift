@@ -533,8 +533,10 @@ final class ToastViewController: UIViewController {
             }
         }
 
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
-        view.addGestureRecognizer(tapGesture)
+        if toast.isInteractive {
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
+            view.addGestureRecognizer(tapGesture)
+        }
 
         DispatchQueue.main.asyncAfter(deadline: .now() + toast.duration.length, execute: {
             self.dismiss(animated: true) { [weak self] in
