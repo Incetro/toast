@@ -249,6 +249,9 @@ final public class Toast {
 
     /// Dismissing direction value
     let dismissingDirection: Direction
+    
+    /// Indicates whether the current toast is interactive
+    let isInteractive: Bool
 
     /// Completion closure
     private(set) var completionHandler: ToastCompletionHandler?
@@ -261,6 +264,7 @@ final public class Toast {
     /// Default initializer
     /// - Parameters:
     ///   - message: toast message
+    ///   - isInteractive: Indicates whether the current toast is interactive
     ///   - state: current state
     ///   - location: target location
     ///   - presentingDirection: presentation direction value
@@ -268,6 +272,7 @@ final public class Toast {
     ///   - source: source view controller
     public init(
         _ message: String,
+        isInteractive: Bool = true,
         state: State = .info,
         location: Location = .bottom,
         presentingDirection: Direction = .vertical,
@@ -280,6 +285,7 @@ final public class Toast {
         self.presentingDirection = presentingDirection
         self.dismissingDirection = dismissingDirection
         self.source = source
+        self.isInteractive = isInteractive
     }
 
     // MARK: - Useful
@@ -768,8 +774,10 @@ public final class ToastView: UIView {
 
         roundCourners(radius: Constants.cornerRadius)
         
-        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
-        addGestureRecognizer(tapGesture)
+        if toast.isInteractive {
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleTap))
+            addGestureRecognizer(tapGesture)
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + toast.duration.length) { [weak self] in
             self?.hide()
         }
