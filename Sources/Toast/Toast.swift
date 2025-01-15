@@ -310,9 +310,20 @@ final public class Toast {
         }
     }
     
+    /// Displays the toast view with the specified duration.
+    ///
+    /// - Parameter duration: The duration for which the toast should be displayed. Defaults to `.average`.
     public func showView(_ duration: Duration = .average) {
         self.duration = duration
         ToastManipulator.shared.queueAndPresentView(self)
+    }
+
+    /// Clears the queue of all pending toasts.
+    ///
+    /// Ensures that no pending toast messages remain in the queue, effectively resetting
+    /// the toast display system.
+    public func clearToastQueue() {
+        ToastManipulator.shared.clearQueue()
     }
 }
 
@@ -345,6 +356,12 @@ private final class ToastManipulator: ToastDelegate {
     fileprivate func queueAndPresentView(_ toast: Toast) {
         queue.enqueue(toast)
         presentViewIfPossible()
+    }
+    
+    /// Clears the current queue of toast messages.
+    /// Resets the queue to an empty instance of `Queue<Toast>` to ensure no pending toasts remain.
+    fileprivate func clearQueue() {
+        queue = Queue<Toast>()
     }
 
     // MARK: - ToastDelegate
