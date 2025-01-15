@@ -785,7 +785,7 @@ public final class ToastView: UIView {
         }
     }
     
-    private func hide() {
+    public func hide() {
         UIView.animate(
             withDuration: 0.25,
             delay: 0,
