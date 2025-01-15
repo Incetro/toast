@@ -322,7 +322,7 @@ final public class Toast {
     ///
     /// Ensures that no pending toast messages remain in the queue, effectively resetting
     /// the toast display system.
-    public func clearToastQueue() {
+    public static func clearToastQueue() {
         ToastManipulator.shared.clearQueue()
     }
 }
